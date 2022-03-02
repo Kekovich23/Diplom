@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>My test page</title>
+	<style>
+		.inputField {
+			width: 300px;
+		}
+	</style>
+	<script src="scripts.js"></script>
+</head>
+
+<body onload="loadPage()">
+	<form id="searchForm">
+		<p>Откуда:<input class="inputField" id="departure" list="departureList" autocomplete="off"
+				oninput="inputNamePoint('departure')">
+			<datalist id="departureList"></datalist>
+		</p>
+		<p>Куда:<input class="inputField" id="destination" list="destinationList" autocomplete="off"
+				oninput="inputNamePoint('destination')">
+			<datalist id="destinationList"></datalist>
+		</p>
+		<p>Груз:<input class="inputField" id="cargolist" autocomplete="off" list="cargo">
+			<datalist id="cargo">
+			</datalist>
+		</p>
+		<p><input type="date" id="calendar" autocomplete="off"></p>
+		<p><input name="DRV" checked type="radio" value="DRV_20FT_30T">20 футов
+			<input name="DRV" type="radio" value="DRV_40FT_30T">40 футов
+		</p>
+		<p>Контейнеров <input type="number" value="1" autocomplete="off" name="numberOfContainers">шт.</p>
+		<p>Вес груза в контейнере<input type="number" autocomplete="off" value="1" name="weight">тонн</p>
+		<input type="button" value="Добавить" id="addCardButton" onclick="clickAddRequestCard()">
+	</form>
+	<p id="requestCards"></p>
+	<input type="button" value="Рассчитать" id="resultButton" onclick="clickSearch()">
+	<p id="resultCards"></p>
+
+
+</body>
+
+</html>
