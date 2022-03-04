@@ -1,4 +1,3 @@
-
 function loadPage() {
     getCargo();
     setDateValue();
@@ -9,7 +8,7 @@ function loadPage() {
  */
 function setDateValue() {
     let date = new Date();
-    date.setTime(date.getTime() + (40*60*60*1000));
+    date.setTime(date.getTime() + (40 * 60 * 60 * 1000));
     document.getElementById("calendar").value = date.toISOString().substring(0, 10);
     document.getElementById("calendar").min = date.toISOString().substring(0, 10);
     date.setDate(date.getDate() + 43);
@@ -78,13 +77,11 @@ function inputNamePoint(typePoint) {
         clearTimeout(timerId);
 
     if (typePoint == "departure") {
-        departurePointJSON = undefined;
         input = form.elements.departure;
         if (input.value != "")
             timerId = setTimeout(getDeparturePoint, 1000, input);
     }
     else {
-        destinationPointJSON = undefined;
         input = form.elements.destination;
         if (input.value != "")
             timerId = setTimeout(getDestinationPoint, 1000, input);
@@ -109,13 +106,10 @@ function getDeparturePoint(input) {
     request.send(data);
 
     request.onload = function () {
-        if (input == "to") {
-            toPointJSON = request.response;
+        if (request.response.length != 0) {
+            departurePointJSON = request.response;
+            parsePoint(request.response, input);
         }
-        else {
-            fromPointJSON = request.response;
-        }
-        parsePoint(request.response, input);
         document.getElementById("addCardButton").disabled = false;
     }
 }
@@ -134,13 +128,10 @@ function getDestinationPoint(input) {
     request.send(data);
 
     request.onload = function () {
-        if (input == "to") {
-            toPointJSON = request.response;
+        if (request.response.length != 0) {
+            destinationPointJSON = request.response;
+            parsePoint(request.response, input);
         }
-        else {
-            fromPointJSON = request.response;
-        }
-        parsePoint(request.response, input);
         document.getElementById("addCardButton").disabled = false;
     }
 }
@@ -165,6 +156,24 @@ function parsePoint(jsonObj, input) {
     }
 }
 
+function searchDeparturePoint(text) {
+    for (let i = 0; i < departurePointJSON.length; i++) {
+        if (departurePointJSON[i].title == text) {
+            return departurePointJSON[i];
+        }
+    }
+    return undefined;
+}
+
+function searchDestinationPoint(text) {
+    for (let i = 0; i < destinationPointJSON.length; i++) {
+        if (destinationPointJSON[i].title == text) {
+            return destinationPointJSON[i];
+        }
+    }
+    return undefined;
+}
+
 /**
  * Создаёт новую карточку-запрос и кнопку удаления к ней.
  */
@@ -176,7 +185,10 @@ function clickAddRequestCard() {
         return;
     }
 
-    if (document.getElementById("destination").value == "" || document.getElementById("departure").value == "") {
+    let departure = searchDeparturePoint(document.getElementById("departure").value),
+        destination = searchDestinationPoint(document.getElementById("destination").value);
+
+    if (departure == undefined || destination == undefined) {
         alert("Не указаны все пункты!");
         return;
     }
@@ -186,9 +198,60 @@ function clickAddRequestCard() {
         return;
     }
 
-    let requestJSON = JSON.stringify({
+    let drv = [];
 
+    if(document.getElementById("box1").checked == true && document.getElementById("box2").checked == true){
+        drv = (["DRV_20FT_30T", "DRV_20FT_24T", "DRV_40FT_30T"]);
+    }
+    else{
+        if (document.getElementById("box1").checked == true) {
+            drv = (["DRV_20FT_30T", "DRV_20FT_24T"]);
+        }
+        else{
+            drv = (["DRV_40FT_30T"]);
+        }
+    }
+
+    let requestJSON = JSON.stringify({
+        "containers": drv,
+        "destAutoZones": null,
+        "request": {
+            "containerCount": document.getElementById("containerCount").value,
+            "containerTrain": "N",
+            "contOwnerCNSI": "TK",
+            "contTypeCNSI": "",
+            "customer": null,
+            "date": Date.parse(document.getElementById("calendar").value),
+            "declaredCost": null,
+            "destAZ": null,
+            "destCountry": {
+                "countryNumber": destination.countryСode
+            },
+            "destLocation": destination.data.code,
+            "externalSystemRequestID": null,
+            "form2List": null,
+            "homeStuffWeightExceeds": null,
+            "intPreference": "RUB",
+            "isComplex": "Y",
+            "items": [
+                {
+                    "etsng": cargoJSON.code,
+                    "gng": null,
+                    "nettoWeight": document.getElementById("weight").value
+                }
+            ],
+            "rank": "6",
+            "sourceAZ": null,
+            "sourceCountry": {
+                "countryNumber": departure.countryСode
+            },
+            "sourceLocation": departure.data.code,
+            "wagonOwnerCNSI": "TK"
+        },
+        "sourceAutoZones": null
     });
+
+    requestJSONS.push(requestJSON);
 
     let from = document.getElementById("departure"),
         to = document.getElementById("destination"),
@@ -207,14 +270,7 @@ function clickAddRequestCard() {
 
     requestCards.append(newiframeElement);
 
-    /*
-    newiframeElement.onload = function () {
-        let iframecontent = document.getElementById("iframe" + (idFrame - 1));
-        let fromLabel = iframecontent.contentWindow.document.getElementById("from");
-        alert(fromLabel.textContent);
-    }
-    */
-
+    
     let newDelButton = document.createElement("input");
     newDelButton.type = "button";
     newDelButton.id = "button" + (idFrame - 1);
@@ -233,72 +289,46 @@ function clickDelRequestCard(id) {
     let delButton = document.getElementById("button" + id);
     deliframe.remove();
     delButton.remove();
+    requestJSONS[id] = undefined;
 }
 
 function clickSearch() {
-
-
-
     document.getElementById("resultButton").disabled = true;
-    let resultCards = document.getElementById("resultCards");
-    resultCards.childNodes.forEach(element => {
-        element.remove();
-    });
+    let requestCards = document.getElementById("requestCards");
 
-    let url = "https://isales.trcont.com/account-back/fcalc/";
-    let request = new XMLHttpRequest();
+    for(let i = 0; i < requestCards.childNodes.length; i++){
+        var element = requestCards.childNodes[i];
+        if(element.id.indexOf('button') != -1) continue;
+        let mainUrl = "https://isales.trcont.com/account-back/fcalc/prepare?popular=true";
+        let mainRequest = new XMLHttpRequest();
+        mainRequest.open("POST", mainUrl, true);
+        mainRequest.setRequestHeader("Content-Type", "application/json");
+        mainRequest.responseType = 'json';
 
-    request.open("POST", url, true);
-    request.setRequestHeader("Content-Type", "application/json");
-    request.responseType = 'json';
+        let id = element.id.replace('iframe', '');
 
-    let data = JSON.stringify({
-        "containerCount": 1,
-        "containerTrain": "N",
-        "contOwnerCNSI": "TK",
-        "contTypeCNSI": "DRV_20FT_24T",
-        "customer": "MANAGER",
-        "date": 1645488000000,
-        "destCountry": {
-            "countryNumber": "643"
-        },
-        "destLocation": "W_RU_KUN",
-        "destLocations": [
-            "T_RU_KUN_TK"
-        ],
-        "externalSystem": {
-            "requestId": "192e3c6f-4b81-4285-a64b-05d0a91eef80",
-            "systemName": "TRCONT.ISALES_PRO"
-        },
-        "intPreference": "RUB",
-        "invalid": false,
-        "isComplex": "Y",
-        "isContainerTrain": "N",
-        "items": [
-            {
-                "etsng": "253014",
-                "nettoWeight": 1
+        //let data = JSON.stringify(requestJSONS[id]);
+
+        mainRequest.send(requestJSONS[id]);
+
+        mainRequest.onload = function () {
+            for (let i = 0; i < mainRequest.response.length; i++) {
+                let url = "https://isales.trcont.com/account-back/fcalc/";
+                let request = new XMLHttpRequest();
+                request.open("POST", url, true);
+                request.setRequestHeader("Content-Type", "application/json");
+                request.responseType = 'json';
+
+                request.send(JSON.stringify(mainRequest.response[i]));
+
+                request.onload = function () {
+                    if (request.status == 200) {
+                        addResultCard(getSumResult(request.response));
+                        document.getElementById("resultButton").disabled = false;
+                    }
+                }
             }
-        ],
-        "itineraryGid": "TRCONT.AW_RU_KLE-KLE_TK-KUN_TK-AW_RU_KUN_3LEG",
-        "language": "RU",
-        "rank": 6,
-        "salesChannel": "TRCONT.ISALES",
-        "sourceCountry": {
-            "countryNumber": "643"
-        },
-        "sourceLocation": "W_RU_KLE",
-        "sourceLocations": [
-            "T_RU_KLE_TK"
-        ],
-        "wagonOwnerCNSI": "TK"
-    });
-
-    request.send(data);
-
-    request.onload = function () {
-        addResultCard(getSumResult(request.response));
-        document.getElementById("resultButton").disabled = false;
+        }
     }
 }
 
@@ -341,8 +371,8 @@ function addResultCard(sum) {
 
     let form = document.forms.searchForm;
 
-    let from = form.elements.from,
-        to = form.elements.to,
+    let departure = form.elements.departure,
+        destination = form.elements.destination,
         cargolist = form.elements.cargolist,
         calendar = form.elements.calendar;
 
@@ -351,8 +381,7 @@ function addResultCard(sum) {
     newiframeElement.height = "250";
     newiframeElement.marginheight = "0";
     newiframeElement.marginwidth = "0";
-    newiframeElement.id = "iframe" + idFrame++;
-    let string = "<html> <body> " + "<p><label id=from>" + from.value + "</label></p>" + "<p><label id=to>" + to.value + "</label></p>" + "<p><label id=cargolist>" + cargolist.value + "</label></p>" + "<p><label id=calendar></p>" + calendar.value + "</label><p>" + returnString + " ₽</p>";
+    let string = "<html> <body> " + "<p><label id=from>" + departure.value + "</label></p>" + "<p><label id=to>" + destination.value + "</label></p>" + "<p><label id=cargolist>" + cargolist.value + "</label></p>" + "<p><label id=calendar></p>" + calendar.value + "</label><p>" + returnString + " ₽</p>";
 
     newiframeElement.srcdoc = string;
 
@@ -370,13 +399,10 @@ let idFrame = 0;
  */
 let timerId = undefined;
 
-let requestJSONS = new Set();
+let requestJSONS = [];
 
 let cargosJSON;
 
 let cargoJSON,
     departurePointJSON,
     destinationPointJSON;
-
-console.log(Date.parse("2022-02-23"));
-console.log(1645574400000);
