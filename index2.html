@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>My test page</title>
+    <!-- Подключение CSS файла -->
+    <link rel="stylesheet" href="modal.css">
+    <style>
+        .inputField {
+            width: 95%;
+        }
+
+        table {
+            text-align: center;
+            width: 100%;
+        }
+    </style>
+    <!-- Подключения JavaScript файла -->
+    <script src="modal.js"></script>
+    
+</head>
+
+<body>
+    <div id="optionBlock">
+        <h2>Раздел с опциями не готов</h2>
+        <h3>Пока что можно выбрать только дату</h3>
+        <div id="mainOptionBlock">
+            <label>Название опции</label>
+            <input id="nameOption" autocomplete="off">
+            <br><br>
+            <label>Дата</label>
+            <input type="date" id="dateOption" autocomplete="off">
+            <br><br>
+            <input name="DRVOption" id="box1" checked type="checkbox" autocomplete="off">20 футов
+            <input name="DRVOption" id="box2" type="checkbox" autocomplete="off">40 футов
+            <br><br>
+            <label>Количество контейнеров</label>
+            <input id="nameOption" autocomplete="off">
+            <br><br>
+            <button class="btn" data-toggle="selectServices">Услуги</button>
+            <br><br>
+            <button>Добавить опцию</button><br><br><br>
+            <button class="btn" data-toggle="showOptions">Опции</button>
+
+            <script>
+                var services = $modal({
+                    title: 'Услуги',
+                    content: 'Содержимое модального окна 1'
+                });
+                var options = $modal({
+                    title: 'Опции',
+                    content: 'Содержимое модального окна 2'
+                });
+                document.addEventListener('click', function (e) {
+                    if (e.target.dataset.toggle === 'selectServices') {
+                        services.show();
+                    } else if (e.target.dataset.toggle === 'showOptions') {
+                        options.show();
+                    }
+                });
+            </script>
+        </div>
+    </div>
+    <div>
+        <br>
+        <br>
+        <br>
+    </div>
+    <datalist id="departureList"></datalist>
+    <datalist id="destinationList"></datalist>
+    <datalist id="cargoList"></datalist>
+    <datalist id="deliveryOptionList"></datalist>
+    <table border="0">
+        <tbody id="mainBody">
+            <tr>
+                <th><input type="checkbox" id="mainCheckbox" autocomplete="off" onchange="clickMainCheckbox(this)"></th>
+                <th>Станция отправления</th>
+                <th>Станция прибытия</th>
+                <th>Тип груза</th>
+                <th>Масса груза</th>
+                <th>Опции</th>
+                <th>Цена</th>
+            </tr>
+            <tr id="tr0">
+                <td>
+                    <input type="checkbox" id="ch0" autocomplete="off" onchange="mainCheckbox.checked = false">
+                </td>
+                <td>
+                    <input class="inputField" name="departure" id="departure0" list="departureList" autocomplete="off"
+                        oninput="inputNamePoint(this)">
+                </td>
+                <td>
+                    <input class="inputField" name="destination" id="destination0" list="destinationList" autocomplete="off"
+                        oninput="inputNamePoint(this)">
+                </td>
+                <td>
+                    <input class="inputField" name="cargo" id="cargo0" autocomplete="off" list="cargoList">
+
+                </td>
+                <td>
+                    <input class="inputField" type="number" id="weight0" value="1" autocomplete="off">
+                </td>
+                <td>
+                    <input class="inputField" id="deliveryOption0" list="deliveryOptionList" autocomplete="off">
+                </td>
+                <td>
+                    <output id="price0"></output>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <button onclick="addRow()">Добавить</button>&nbsp;
+    <button onclick="deleteRow()">Удалить</button>&nbsp;
+    <button onclick="calculate(this)">Рассчитать</button>
+    <script src="script2.js"></script>
+</body>
+
+</html>
