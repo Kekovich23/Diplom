@@ -1,5 +1,3 @@
-
-
 //#region ГРУЗ
 let cargoJSON;
 /**
@@ -58,6 +56,7 @@ function searchCargo(text) {
 let timerId;
 
 let departurePointsJSON, destinationPointsJSON;
+let departurePointsJSONs = [], destinationPointsJSONs = [];
 
 /**
  * Запускает таймер после изменения текстового поля. По истечению таймера загружает доступные пункты отправки/прибытия в соответсвующий datalist.
@@ -94,10 +93,14 @@ function getRequest(data, input) {
         if (request.response.length != 0) {
             if (input.name == "departure") {
                 departurePointsJSON = request.response;
+                var id = input.id;
+                departurePointsJSONs[id.replace("departure", "")] = departurePointsJSON;
                 parsePoint(departurePointsJSON, input);
             }
             else {
                 destinationPointsJSON = request.response;
+                var id = input.id;
+                destinationPointsJSONs[id.replace("destination", "")] = destinationPointsJSON;
                 parsePoint(destinationPointsJSON, input);
             }
         }
@@ -152,10 +155,10 @@ function parsePoint(pointsJSON, input) {
  * @param {string} text Имя пункта.
  * @returns Возвращает JSON пункта или null, если JSON не найден.
  */
-function searchDeparturePoint(text) {
-    for (let i = 0; i < departurePointsJSON.length; i++) {
-        if (departurePointsJSON[i].title == text) {
-            return departurePointsJSON[i];
+function searchDeparturePoint(text, id) {
+    for (let i = 0; i < departurePointsJSONs[id].length; i++) {
+        if (departurePointsJSONs[id][i].title == text) {
+            return departurePointsJSONs[id][i];
         }
     }
     return null;
@@ -166,10 +169,10 @@ function searchDeparturePoint(text) {
  * @param {string} text Имя пункта.
  * @returns Возвращает JSON пункта или null, если JSON не найден.
  */
-function searchDestinationPoint(text) {
-    for (let i = 0; i < destinationPointsJSON.length; i++) {
-        if (destinationPointsJSON[i].title == text) {
-            return destinationPointsJSON[i];
+function searchDestinationPoint(text, id) {
+    for (let i = 0; i < destinationPointsJSONs[id].length; i++) {
+        if (destinationPointsJSONs[id][i].title == text) {
+            return destinationPointsJSONs[id][i];
         }
     }
     return null;
@@ -380,8 +383,8 @@ function calculate(button) {
             return;
         }
 
-        departure = searchDeparturePoint(departure);
-        destination = searchDestinationPoint(destination);
+        departure = searchDeparturePoint(departure, i);
+        destination = searchDestinationPoint(destination, i);
         cargo = searchCargo(cargo);
 
         if (departure == null || destination == null || cargo == null) {
@@ -473,6 +476,11 @@ function calculate(button) {
             }
 
             priceOutput.value = price;
+            button.disabled = false;
+        }
+        mainRequest.onerror = function(){
+            let priceOutput = document.getElementById("price" + i);
+            priceOutput.value = "Ошибка";
             button.disabled = false;
         }
     }
